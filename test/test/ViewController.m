@@ -32,8 +32,6 @@ static CGFloat const kBtnHeight = 30.0;
 
 @property (nonatomic, assign) CGFloat duration;
 
-@property (nonatomic, assign) BOOL startAdd;
-
 @end
 
 @implementation ViewController
@@ -41,7 +39,7 @@ static CGFloat const kBtnHeight = 30.0;
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.duration = 0.25;
+    self.duration = 0.3;
     
     CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
     CGFloat btnWidth = (screenWidth - 40.0) / 4.0 - 20.0;
@@ -85,78 +83,88 @@ static CGFloat const kBtnHeight = 30.0;
     
     
     [self startAnimation];
-//    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"path"];
-//    animation.duration = 0.25;
-////    animation.fromValue = @(CGRectGetMidX(self.lastBtn.frame));
-////    animation.toValue = [self reloadBeziePath];
-//    //使视图保留到最新状态
-//    animation.removedOnCompletion = NO;
-//    animation.fillMode = kCAFillModeForwards;
-//    self.shapeLayer.path = [self reloadBeziePath].CGPath;
-//    [self.shapeLayer addAnimation:animation forKey:nil];
-//    self.shapeLayer.path = [UIBezierPath bezierPathWithRoundedRect:self.selectedBtn.frame cornerRadius:15.0].CGPath;
 }
 
 - (void)step:(CADisplayLink *)timer
 {
-    BOOL isMoveToRight = (CGRectGetMinX(self.selectedBtn.frame) > CGRectGetMinX(self.lastBtn.frame));
+    // 是否向移动
+    BOOL is_move_to_right = (CGRectGetMinX(self.selectedBtn.frame) > CGRectGetMinX(self.lastBtn.frame));
+    // 当前时间
+    NSTimeInterval this_time = [[NSDate date] timeIntervalSince1970];
+    // 动画已执行时间
+    NSTimeInterval animation_time = this_time - self.lastStep;
     
-    NSTimeInterval thisStep = [[NSDate date] timeIntervalSince1970];
-    NSTimeInterval stepDuration = thisStep - self.lastStep;
+    /**
+     x轴，动画执行路程
+     */
+    // x轴，总动画执行的宽度
+    CGFloat total_animation_width = fabs(CGRectGetMinX(self.selectedBtn.frame) - CGRectGetMinX(self.lastBtn.frame));
+    // x轴，一组动画执行的宽度（该宽度内，执行一组动画，一组动画指：在这组动画中变化的节点为一个动画，所有的变化节点组成一组动画)
+    CGFloat group_animation_width = (CGRectGetWidth(self.selectedBtn.frame) + 20.0);
+    // x轴，一个动画执行的宽度
+    CGFloat one_animation_width = group_animation_width / 3.0;
+    // 动画个数
+    NSInteger animation_number = (NSInteger)(total_animation_width / one_animation_width);
+    
+    /**
+     y轴，动画执行路程
+     */
+    // y轴，一组动画的高度
+    CGFloat y_animation_height = (kBtnHeight / 2.0);
+    // y轴，1/3 个组动画高度 （一个动画可能执行的高度是组动画高度的1/3或者2/3）
+    CGFloat y_1_3_animation_height = y_animation_height / 3.0;
+    // y轴，2/3 个组动画高度
+    CGFloat y_2_3_animation_height = y_animation_height / 3.0 * 2.0;
 
-    CGFloat changeTotalWidth = (CGRectGetWidth(self.selectedBtn.frame) + 20.0) / 2.0;
-    CGFloat r = (kBtnHeight / 2.0);
-    CGFloat changeTotalHeight1 = r / 3.0;
-    CGFloat changeTotalHeight2 = r / 3.0 * 2.0;
+    /**
+     动画执行时间
+     */
+    // 一个动画执行的总时间
+    CGFloat one_animation_time = self.duration / animation_number;
     
-    CGFloat scale = changeTotalWidth / (self.duration / 2.0);
-    CGFloat scale1 = changeTotalHeight1 / (self.duration / 2.0);
-    CGFloat scale2 = changeTotalHeight2 / (self.duration / 2.0);
+    /**
+     动画执行速度
+     */
+    // x轴，一个动画执行的速度
+    CGFloat velocity_x = one_animation_width / one_animation_time;
+    // y轴，1/3 个组动画高度，在一个动画执行时间内的速度
+    CGFloat velocity_1_3_y = y_1_3_animation_height / one_animation_time;
+    // y轴，2/3 个组动画高度，在一个动画执行时间内的速度
+    CGFloat velocity_2_3_y = y_2_3_animation_height / one_animation_time;
     
-    CGFloat changeDistance1 = isMoveToRight ? (stepDuration * scale) : -(stepDuration * scale);
-    CGFloat startX1 = isMoveToRight ? (CGRectGetMinX(self.lastBtn.frame) + kBtnHeight / 2.0) : (CGRectGetMaxX(self.lastBtn.frame) - kBtnHeight / 2.0);
-    CGFloat startX2 = isMoveToRight ? (CGRectGetMaxX(self.lastBtn.frame) - kBtnHeight / 2.0) : (CGRectGetMinX(self.lastBtn.frame) + kBtnHeight / 2.0);
-    self.center1 = CGPointMake(startX1 + changeDistance1, self.center1.y);
-    self.center2 = CGPointMake(startX2 + changeDistance1, self.center2.y);
+    // x轴，一定时间内执行的距离
+    CGFloat x_animation_distanch = is_move_to_right ? (animation_time * velocity_x) : -(animation_time * velocity_x);
+    // x轴，开始的坐标
+    CGFloat startX1 = is_move_to_right ? (CGRectGetMinX(self.lastBtn.frame) + kBtnHeight / 2.0) : (CGRectGetMaxX(self.lastBtn.frame) - kBtnHeight / 2.0);
+    CGFloat startX2 = is_move_to_right ? (CGRectGetMaxX(self.lastBtn.frame) - kBtnHeight / 2.0) : (CGRectGetMinX(self.lastBtn.frame) + kBtnHeight / 2.0);
+    // x轴，变化后的坐标
+    self.center1 = CGPointMake(startX1 + x_animation_distanch, self.center1.y);
+    self.center2 = CGPointMake(startX2 + x_animation_distanch, self.center2.y);
     
-    NSLog(@" --- === %@ === ---",@(changeDistance1));
-    
-    BOOL isMoveHalf = NO;
-    if (fabs(changeDistance1) >= changeTotalWidth) {
-        isMoveHalf = YES;
-    }
-        
-    if (!isMoveHalf) {
-        self.r1 = r - scale1 * stepDuration;
-
-        self.r2 = r - scale2 * stepDuration;
+    // x轴，获取当前执行的第几个动画（下标从0开始）
+    NSInteger animation_index = (NSInteger)(fabs(x_animation_distanch) / one_animation_width);
+    // 每执行一个动画，将时间从0开始重新计算
+    CGFloat perUnitTime = (animation_time - one_animation_time * animation_index);
+    /**
+     一组动画分为3个动画，
+     第一个1/3的时间，r1：由 总高度1 -> 2/3总高度，r2：由 总高度1 -> 1/3总高度
+     第二个1/3的时间，r1：由 2/3总高度 -> 1/3总高度，r2：由 1/3总高度 -> 2/3总高度
+     第三个1/3的时间，r1：由 1/3总高度 ->  总高度1，r2：由 2/3总高度 -> 总高度1
+     */
+    if (animation_index % 3 == 0) {
+        self.r1 = y_animation_height - velocity_1_3_y * perUnitTime;
+        self.r2 = y_animation_height - velocity_2_3_y * perUnitTime;
+    }else if (animation_index % 3 == 1) {
+        self.r1 = y_2_3_animation_height - velocity_1_3_y * perUnitTime;
+        self.r2 = y_1_3_animation_height + velocity_1_3_y * perUnitTime;
     }else {
-        if (self.r1 > changeTotalHeight1 && !self.startAdd) {
-            self.r1 = changeTotalHeight2 - scale1 * (stepDuration - self.duration / 2.0);
-        }else {
-            self.startAdd = YES;
-            self.r1 = changeTotalHeight1 + scale2 * (stepDuration - self.duration / 2.0);
-        }
-
-        self.r2 = changeTotalHeight1 + scale2 * (stepDuration - self.duration / 2.0);
+        self.r1 = y_1_3_animation_height + velocity_2_3_y * perUnitTime;
+        self.r2 = y_2_3_animation_height + velocity_1_3_y * perUnitTime;
     }
     
-//    if (self.r1 > changeTotalHeight2 && !isMoveHalf) {
-//        self.r1 = self.r1 - changeTotalHeight1 * scale;
-//    }else if (self.r1 > changeTotalHeight1 && isMoveHalf) {
-//        self.r1 = self.r1 - changeTotalHeight1 * scale;
-//    }else if (isMoveHalf) {
-//        self.r1 = self.r1 + changeTotalHeight2 * scale;
-//    }
-//
-//    if (self.r2 > changeTotalHeight1 && !isMoveHalf) {
-//        self.r2 = self.r2 - changeTotalHeight2 * scale;
-//    }else if (self.r2 < changeTotalHeight1 && isMoveHalf) {
-//        self.r2 = self.r2 + changeTotalHeight2 * scale;
-//    }
-        
-    if (stepDuration >= self.duration) {
-        if (isMoveToRight) {
+    // 动画时间大于等于动画执行时长，结束动画
+    if (animation_time >= self.duration) {
+        if (is_move_to_right) {
             self.r1 = self.r2 = kBtnHeight / 2.0;
             self.center1 = CGPointMake(CGRectGetMinX(self.selectedBtn.frame) + kBtnHeight / 2.0, self.center1.y);
             self.center2 = CGPointMake(CGRectGetMaxX(self.selectedBtn.frame) - kBtnHeight / 2.0, self.center2.y);
@@ -167,13 +175,6 @@ static CGFloat const kBtnHeight = 30.0;
         }
         [self stopAnimation];
     }
-//    if (isMoveToRight && stepDuration >= self.duration) {
-//
-//        [self stopAnimation];
-//    }else if (!isMoveToRight && self.center2.x < CGRectGetMinX(self.selectedBtn.frame) + kBtnHeight / 2.0) {
-//
-//        [self stopAnimation];
-//    }
     
     self.shapeLayer.path = [self reloadBeziePath].CGPath;
 }
@@ -182,8 +183,6 @@ static CGFloat const kBtnHeight = 30.0;
 {
     self.lastStep = [[NSDate date] timeIntervalSince1970];
     [self.timer setFireDate:[NSDate distantPast]];
-//    self.lastStep = CACurrentMediaTime();
-//    self.timer.paused = NO;
 }
 
 - (void)stopAnimation
@@ -254,7 +253,6 @@ static CGFloat const kBtnHeight = 30.0;
     if (!_timer) {
         _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0 target:self selector:@selector(step:) userInfo:nil repeats:YES];
         [[NSRunLoop mainRunLoop] addTimer:_timer forMode:NSDefaultRunLoopMode];
-//        [_timer addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
         [_timer setFireDate:[NSDate distantFuture]];
     }
     return _timer;
