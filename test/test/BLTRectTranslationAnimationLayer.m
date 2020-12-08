@@ -34,12 +34,13 @@
 /// 圆2的半径
 @property (nonatomic, assign) CGFloat r2;
 
-// control point P
+/// control point P
 @property (nonatomic, assign) CGPoint pointP;
 
-// control point O
+/// control point O
 @property (nonatomic, assign) CGPoint pointO;
 
+/// 默认path的高度（静止时，path的高度）
 @property (nonatomic, assign) CGFloat defaultHeight;
 
 @end
