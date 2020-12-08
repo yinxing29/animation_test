@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		85504D4C257FCC75000F1152 /* BLTRectTranslationAnimationLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 85504D4B257FCC75000F1152 /* BLTRectTranslationAnimationLayer.m */; };
 		85E18525248169C6005A8B2D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 85E18524248169C6005A8B2D /* AppDelegate.m */; };
 		85E18528248169C6005A8B2D /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 85E18527248169C6005A8B2D /* SceneDelegate.m */; };
 		85E1852B248169C6005A8B2D /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 85E1852A248169C6005A8B2D /* ViewController.m */; };
@@ -36,6 +37,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		85504D4A257FCC75000F1152 /* BLTRectTranslationAnimationLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLTRectTranslationAnimationLayer.h; sourceTree = "<group>"; };
+		85504D4B257FCC75000F1152 /* BLTRectTranslationAnimationLayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BLTRectTranslationAnimationLayer.m; sourceTree = "<group>"; };
 		85E18520248169C6005A8B2D /* test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = test.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		85E18523248169C6005A8B2D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		85E18524248169C6005A8B2D /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -110,6 +113,8 @@
 				85E18527248169C6005A8B2D /* SceneDelegate.m */,
 				85E18529248169C6005A8B2D /* ViewController.h */,
 				85E1852A248169C6005A8B2D /* ViewController.m */,
+				85504D4A257FCC75000F1152 /* BLTRectTranslationAnimationLayer.h */,
+				85504D4B257FCC75000F1152 /* BLTRectTranslationAnimationLayer.m */,
 				85E1852C248169C6005A8B2D /* Main.storyboard */,
 				85E1852F248169C7005A8B2D /* Assets.xcassets */,
 				85E18531248169C7005A8B2D /* LaunchScreen.storyboard */,
@@ -268,6 +273,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				85E1852B248169C6005A8B2D /* ViewController.m in Sources */,
+				85504D4C257FCC75000F1152 /* BLTRectTranslationAnimationLayer.m in Sources */,
 				85E18525248169C6005A8B2D /* AppDelegate.m in Sources */,
 				85E18536248169C7005A8B2D /* main.m in Sources */,
 				85E18528248169C6005A8B2D /* SceneDelegate.m in Sources */,
