@@ -32,6 +32,10 @@ static CGFloat const kBtnHeight = 30.0;
 
 @property (nonatomic, assign) CGFloat duration;
 
+@property (nonatomic, assign) CGPoint pointP;
+
+@property (nonatomic, assign) CGPoint pointO;
+
 @end
 
 @implementation ViewController
@@ -79,8 +83,9 @@ static CGFloat const kBtnHeight = 30.0;
         self.center1 = CGPointMake(CGRectGetMaxX(self.lastBtn.frame) - kBtnHeight / 2.0, CGRectGetMidY(self.lastBtn.frame));
         self.center2 = CGPointMake(CGRectGetMinX(self.lastBtn.frame) + kBtnHeight / 2.0, CGRectGetMidY(self.lastBtn.frame));
     }
+    self.pointP = CGPointMake(CGRectGetMidX(self.lastBtn.frame), CGRectGetMinY(self.lastBtn.frame));
+    self.pointO = CGPointMake(CGRectGetMidX(self.lastBtn.frame), CGRectGetMaxY(self.lastBtn.frame));
     self.r1 = self.r2 = kBtnHeight / 2.0;
-    
     
     [self startAnimation];
 }
@@ -109,11 +114,11 @@ static CGFloat const kBtnHeight = 30.0;
     /**
      y轴，动画执行路程
      */
-    // y轴，一组动画的高度
+    // y轴，最大变化高度（即两个圆最大的半径）
     CGFloat y_animation_height = (kBtnHeight / 2.0);
-    // y轴，1/3 个组动画高度 （一个动画可能执行的高度是组动画高度的1/3或者2/3）
+    // y轴，1/3 个最大变化高度 （一个动画可能执行的高度是组动画高度的1/3或者2/3）
     CGFloat y_1_3_animation_height = y_animation_height / 3.0;
-    // y轴，2/3 个组动画高度
+    // y轴，2/3 个最大变化高度
     CGFloat y_2_3_animation_height = y_animation_height / 3.0 * 2.0;
 
     /**
@@ -133,17 +138,58 @@ static CGFloat const kBtnHeight = 30.0;
     CGFloat velocity_2_3_y = y_2_3_animation_height / one_animation_time;
     
     // x轴，一定时间内执行的距离
-    CGFloat x_animation_distanch = is_move_to_right ? (animation_time * velocity_x) : -(animation_time * velocity_x);
+    CGFloat x_animation_distance = is_move_to_right ? (animation_time * velocity_x) : -(animation_time * velocity_x);
     // x轴，开始的坐标
     CGFloat startX1 = is_move_to_right ? (CGRectGetMinX(self.lastBtn.frame) + kBtnHeight / 2.0) : (CGRectGetMaxX(self.lastBtn.frame) - kBtnHeight / 2.0);
     CGFloat startX2 = is_move_to_right ? (CGRectGetMaxX(self.lastBtn.frame) - kBtnHeight / 2.0) : (CGRectGetMinX(self.lastBtn.frame) + kBtnHeight / 2.0);
     // x轴，变化后的坐标
-    self.center1 = CGPointMake(startX1 + x_animation_distanch, self.center1.y);
-    self.center2 = CGPointMake(startX2 + x_animation_distanch, self.center2.y);
+    self.center1 = CGPointMake(startX1 + x_animation_distance, self.center1.y);
+    self.center2 = CGPointMake(startX2 + x_animation_distance, self.center2.y);
     
+    /**
+     计算控制点动画
+     */
+    // x轴，控制点一个动画执行的宽度
+    CGFloat control_point_animation_width = group_animation_width / 2.0;
+    // 控制点，y轴，最大变化高度
+    CGFloat control_point_y_change_max_height = y_animation_height / 4.0 * 3.0;
+    // 控制点，动画个数
+    CGFloat control_point_animation_number = (NSInteger)(total_animation_width / control_point_animation_width);
+    // 控制点，一个动画执行的时间
+    CGFloat control_point_one_animation_time = self.duration / control_point_animation_number;
+    // 控制点，x轴，1/2 个组动画宽度，在一个动画执行时间内的速度
+    CGFloat control_point_velocity_x = control_point_animation_width / control_point_one_animation_time;
+    // 控制点，y轴，最大变化高度一个动画执行的速度
+    CGFloat control_point_velocity_y = control_point_y_change_max_height / control_point_one_animation_time;
+    // 控制点，x轴，一定时间内执行的距离
+    CGFloat control_point_x_animation_distance = animation_time * control_point_velocity_x;
+    // 控制点，x轴，获取当前执行的第几个动画（下标从0开始）
+    NSInteger control_point_animation_index = (NSInteger)(fabs(control_point_x_animation_distance) / control_point_animation_width);
+    // 控制点，y轴，每执行一个动画，将时间从0开始重新计算
+    CGFloat control_point_per_unit_time = (animation_time - control_point_one_animation_time * control_point_animation_index);
+    // 控制点，一个动画开始时，P点和O点开始的x，y坐标
+    CGFloat startPX = CGRectGetMidX(self.lastBtn.frame);
+    CGFloat startPY = CGRectGetMinY(self.lastBtn.frame);
+    CGFloat startOY = CGRectGetMaxY(self.lastBtn.frame);
+    // 控制点，x轴，变化的距离，右移时+，左移时-
+    CGFloat control_point_x_change_distance = is_move_to_right ? control_point_x_animation_distance : -control_point_x_animation_distance;
+    CGFloat control_point_y_change_distance = control_point_per_unit_time * control_point_velocity_y;
+    /**
+     一组动画分为2个动画，P点和O点，x轴坐标随着时间一直变换 （最大变化高度control_point_y_change_max_height）
+     第一个1/2的时间，y轴，P点 + 变化高度，O点 - 变化高度
+     第二个1/2的时间，y轴，和上一个动画正好相反
+     */
+    if (control_point_animation_index % 2 == 0) {
+        self.pointP = CGPointMake(startPX + control_point_x_change_distance, startPY + control_point_y_change_distance);
+        self.pointO = CGPointMake(self.pointP.x, startOY - control_point_y_change_distance);
+    }else {
+        self.pointP = CGPointMake(startPX + control_point_x_change_distance, startPY + control_point_y_change_max_height - control_point_y_change_distance);
+        self.pointO = CGPointMake(self.pointP.x, startOY - control_point_y_change_max_height + control_point_y_change_distance);
+    }
+        
     // x轴，获取当前执行的第几个动画（下标从0开始）
-    NSInteger animation_index = (NSInteger)(fabs(x_animation_distanch) / one_animation_width);
-    // 每执行一个动画，将时间从0开始重新计算
+    NSInteger animation_index = (NSInteger)(fabs(x_animation_distance) / one_animation_width);
+    // y轴，每执行一个动画，将时间从0开始重新计算
     CGFloat perUnitTime = (animation_time - one_animation_time * animation_index);
     /**
      一组动画分为3个动画，
@@ -173,6 +219,8 @@ static CGFloat const kBtnHeight = 30.0;
             self.center1 = CGPointMake(CGRectGetMaxX(self.selectedBtn.frame) - kBtnHeight / 2.0, self.center1.y);
             self.center2 = CGPointMake(CGRectGetMinX(self.selectedBtn.frame) + kBtnHeight / 2.0, self.center2.y);
         }
+        self.pointP = CGPointMake(CGRectGetMidX(self.selectedBtn.frame), CGRectGetMinY(self.selectedBtn.frame));
+        self.pointO = CGPointMake(CGRectGetMidX(self.selectedBtn.frame), CGRectGetMaxY(self.selectedBtn.frame));
         [self stopAnimation];
     }
     
@@ -195,43 +243,22 @@ static CGFloat const kBtnHeight = 30.0;
 
 - (UIBezierPath *)reloadBeziePath
 {
-    CGFloat r1 = self.r1;
-    CGFloat r2 = self.r2;
-    
-    CGFloat x1 = self.center1.x;
-    CGFloat y1 = self.center1.y;
-    
-    CGFloat x2 = self.center2.x;
-    CGFloat y2 = self.center2.y;
-    
-    CGFloat distance = [self distanceWithPoint1:CGPointMake(x2, y2) point2:CGPointMake(x1, y1)];
-    
-    CGFloat sinDegree = (x2 - x1) / distance;
-    CGFloat cosDegree = (y2 - y1) / distance;
-    CGPoint pointA = CGPointMake(x1 - r1 * cosDegree, y1 + r1 * sinDegree);
-    CGPoint pointB = CGPointMake(x1 + r1 * cosDegree, y1 - r1 * sinDegree);
-    CGPoint pointC = CGPointMake(x2 + r2 * cosDegree, y2 - r2 * sinDegree);
-    CGPoint pointD = CGPointMake(x2 - r2 * cosDegree, y2 + r2 * sinDegree);
-    CGPoint pointP = CGPointMake(pointB.x + (distance / 2.0) * sinDegree, pointB.y + (distance / 2.0) * cosDegree);
-    CGPoint pointO = CGPointMake(pointA.x + (distance / 2.0) * sinDegree, pointA.y + (distance / 2.0) * cosDegree);
-    
+    BOOL is_move_right = self.center1.x < self.center2.x;
+    CGPoint pointA = CGPointMake(self.center1.x, self.center1.y + (is_move_right ? self.r1 : -self.r1));
+    CGPoint pointB = CGPointMake(self.center1.x, self.center1.y - (is_move_right ? self.r1 : -self.r1));
+    CGPoint pointC = CGPointMake(self.center2.x, self.center2.y - (is_move_right ? self.r2 : -self.r2));
+    CGPoint pointD = CGPointMake(self.center2.x, self.center2.y + (is_move_right ? self.r2 : -self.r2));
+
     UIBezierPath *path = [UIBezierPath bezierPath];
     [path moveToPoint:pointA];
-    [path addArcWithCenter:CGPointMake(x1, y1) radius:r1 startAngle:0 endAngle:2 * M_PI clockwise:YES];
+    [path addArcWithCenter:self.center1 radius:self.r1 startAngle:0 endAngle:2 * M_PI clockwise:YES];
     [path addLineToPoint:pointB];
-    [path addQuadCurveToPoint:pointC controlPoint:pointP];
-    [path addArcWithCenter:CGPointMake(x2, y2) radius:r2 startAngle:0 endAngle:2 * M_PI clockwise:YES];
+    [path addQuadCurveToPoint:pointC controlPoint:is_move_right ? self.pointP : self.pointO];
+    [path addArcWithCenter:self.center2 radius:self.r2 startAngle:0 endAngle:2 * M_PI clockwise:YES];
     [path addLineToPoint:pointD];
-    [path addQuadCurveToPoint:pointA controlPoint:pointO];
+    [path addQuadCurveToPoint:pointA controlPoint:is_move_right ? self.pointO : self.pointP];
     
     return path;
-}
-
-- (CGFloat)distanceWithPoint1:(CGPoint)point1 point2:(CGPoint)point2
-{
-    CGFloat offsetX = point1.x - point2.x;
-    CGFloat offsetY = point1.y - point2.y;
-    return sqrt(offsetX * offsetX + offsetY * offsetY);
 }
 
 - (CAShapeLayer *)shapeLayer
