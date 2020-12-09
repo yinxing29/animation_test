@@ -11,10 +11,10 @@
 
 @interface BLTRectTranslationAnimationLayer ()
 
-@property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) CADisplayLink *displayLink;
 
 /// 上一步动画的时间
-@property (nonatomic, assign) NSTimeInterval lastStepTime;
+@property (nonatomic, assign) NSTimeInterval animationBeginTime;
 
 /// path动画开始的位置
 @property (nonatomic, assign) CGRect fromRect;
@@ -96,26 +96,26 @@
 }
 #pragma mark - ------------------------------ 公用方法 End ------------------------------
 
-#pragma mark - timer
+#pragma mark - CADisplayLink
 - (void)startAnimation
 {
-    self.lastStepTime = [[NSDate date] timeIntervalSince1970];
-    [self.timer setFireDate:[NSDate distantPast]];
+    self.animationBeginTime = CACurrentMediaTime();
+    self.displayLink.paused = NO;
 }
 
 - (void)stopAnimation
 {
-    [self.timer setFireDate:[NSDate distantFuture]];
-    [self.timer invalidate];
-    self.timer = nil;
+    self.displayLink.paused = YES;
+    [self.displayLink invalidate];
+    self.displayLink = nil;
 }
 
-- (void)step
+- (void)step:(CADisplayLink *)sender
 {
     // 当前时间
-    NSTimeInterval this_time = [[NSDate date] timeIntervalSince1970];
+    NSTimeInterval this_time = CACurrentMediaTime();
     // 动画已执行时间
-    NSTimeInterval animation_time = this_time - self.lastStepTime;
+    NSTimeInterval animation_time = this_time - self.animationBeginTime;
     
     [self p_animationCircleCenterAndRadiusWithAnimationTime:animation_time];
     [self p_animationControlPointWithAnimationTime:animation_time];
@@ -140,7 +140,7 @@
     
     self.path = [self reloadBeziePath].CGPath;
 }
-#pragma mark - ------------------------------ timer End ------------------------------
+#pragma mark - ------------------------------ CADisplayLink End ------------------------------
 
 #pragma mark - 动画拆解
 /**
@@ -318,14 +318,14 @@
 #pragma mark - ------------------------------ setter End ------------------------------
 
 #pragma mark - 懒加载
-- (NSTimer *)timer
+- (CADisplayLink *)displayLink
 {
-    if (!_timer) {
-        _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0 target:self selector:@selector(step) userInfo:nil repeats:YES];
-        [[NSRunLoop mainRunLoop] addTimer:_timer forMode:NSDefaultRunLoopMode];
-        [_timer setFireDate:[NSDate distantFuture]];
+    if (!_displayLink) {
+        _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(step:)];
+        [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+        _displayLink.paused = YES;
     }
-    return _timer;
+    return _displayLink;
 }
 #pragma mark - ------------------------------ 懒加载 End ------------------------------
 

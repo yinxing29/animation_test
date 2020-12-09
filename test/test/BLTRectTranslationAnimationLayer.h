@@ -17,7 +17,7 @@
 /// 一个动画执行的最小宽度（必须）
 @property (nonatomic, assign) CGFloat oneAnimationMinWidth;
 
-/// 动画执行时间（默认3s）
+/// 动画执行时间（默认0.3s）
 @property (nonatomic, assign) CGFloat animationDuration;
 
 /// 动画默认path的frame
